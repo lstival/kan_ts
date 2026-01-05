@@ -74,7 +74,8 @@ def main():
         encoder=encoder,
         projection_dim=model_cfg['projection_dim'],
         prediction_length=data_cfg['prediction_length'],
-        lr=model_cfg['lr']
+        lr=model_cfg['lr'],
+        freeze_encoder=True # Freeze encoder as requested
     )
 
     # 6. Trainer

@@ -39,6 +39,13 @@ def compute_wavelet_transform(
     # 4. Convert to absolute values (magnitude) and then to tensor
     scalogram = np.abs(coefficients)
     
+    # 5. Normalize scalogram to [0, 1] for better training stability
+    s_min, s_max = scalogram.min(), scalogram.max()
+    if s_max > s_min:
+        scalogram = (scalogram - s_min) / (s_max - s_min)
+    else:
+        scalogram = np.zeros_like(scalogram)
+        
     return torch.from_numpy(scalogram).float()
 
 class WaveletTransform:

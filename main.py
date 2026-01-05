@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 import torch
 import sys
 import yaml
+import warnings
 from pathlib import Path
 
 # Add project root to sys.path
@@ -18,6 +19,9 @@ def load_config(config_path: str):
         return yaml.safe_load(f)
 
 def main():
+    # Suppress specific pykan warnings about std() on small batches
+    warnings.filterwarnings("ignore", message=".*std\(\): degrees of freedom is <= 0.*")
+    
     # Set float32 matmul precision for better performance on NVIDIA GPUs
     torch.set_float32_matmul_precision('medium')
 

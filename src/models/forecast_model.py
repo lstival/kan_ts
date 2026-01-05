@@ -15,6 +15,8 @@ class ForecastHead(nn.Module):
     ):
         super().__init__()
         self.encoder = encoder
+        # Add BatchNorm to stabilize features from the encoder
+        self.bn = nn.BatchNorm1d(projection_dim)
         # Simple linear head for forecasting
         self.head = nn.Linear(projection_dim, prediction_length)
 
@@ -26,6 +28,8 @@ class ForecastHead(nn.Module):
             Predictions (batch, prediction_length)
         """
         features = self.encoder(x)
+        # Normalize features before the head
+        features = self.bn(features)
         predictions = self.head(features)
         return predictions
 
@@ -35,13 +39,19 @@ class ForecastLightning(pl.LightningModule):
         encoder: KANEncoder2D,
         projection_dim: int,
         prediction_length: int,
-        lr: float = 1e-3
+        lr: float = 1e-3,
+        freeze_encoder: bool = True
     ):
         super().__init__()
         self.model = ForecastHead(encoder, projection_dim, prediction_length)
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.HuberLoss() # More robust than MSE for high initial losses
         self.lr = lr
+        self.freeze_encoder = freeze_encoder
         self.save_hyperparameters(ignore=['encoder'])
+        
+        if self.freeze_encoder:
+            for param in self.model.encoder.parameters():
+                param.requires_grad = False
 
     def forward(self, x):
         return self.model(x)
@@ -50,7 +60,7 @@ class ForecastLightning(pl.LightningModule):
         x, y, _ = batch # x: images, y: targets, _: scalers
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True, batch_size=x.shape[0])
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -61,9 +71,9 @@ class ForecastLightning(pl.LightningModule):
         # Evaluation on original scale
         mse_orig, mae_orig = self._evaluate_original_scale(y, y_hat, scalers)
         
-        self.log("val_loss", loss, prog_bar=True)
-        self.log("val_mse_orig", mse_orig, prog_bar=True)
-        self.log("val_mae_orig", mae_orig, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, batch_size=x.shape[0])
+        self.log("val_mse_orig", mse_orig, prog_bar=True, batch_size=x.shape[0])
+        self.log("val_mae_orig", mae_orig, prog_bar=True, batch_size=x.shape[0])
         return loss
 
     def _evaluate_original_scale(self, y, y_hat, scalers):

@@ -1,25 +1,31 @@
-# KAN Time Series Project
+# KAN Time Series Contrastive Forecasting
 
-This project implements a simplified Chronos dataset loader using PyTorch Lightning and follows ML best practices.
+This project implements a high-performance time series forecasting pipeline using **Kolmogorov-Arnold Networks (KAN)** and **Contrastive Learning**. It transforms 1D time series data into 2D Wavelet Scalograms (images) to extract robust features before training a forecasting head.
+
+## Project Idea
+
+The core concept is to treat time series as images using the **Continuous Wavelet Transform (CWT)**. By doing so, we can leverage computer vision techniques (CNNs) combined with the non-linear representational power of **KAN** to learn complex temporal patterns.
+
+1.  **Data Representation**: 1D time series are converted into square 2D images (Scalograms) using `PyWavelets`.
+2.  **Pre-training**: A `KANEncoder2D` (CNN + KAN) is trained using **Contrastive Learning (InfoNCE Loss)** to learn generalizable features from a large collection of Chronos datasets.
+3.  **Forecasting**: A linear head is attached to the pre-trained encoder to predict future values based on the learned representations.
+
+## Key Features
+
+- **Hybrid Architecture**: Combines CNNs for spatial feature extraction with KANs for high-level non-linear mapping.
+- **Contrastive Learning**: Uses InfoNCE loss to learn robust features without explicit labels.
+- **Mixed Precision (AMP)**: Optimized for NVIDIA GPUs using 16-bit mixed precision.
+- **Chronos Integration**: Simplified loading of diverse time series datasets from Hugging Face.
+- **Wavelet Transformation**: Produces square 2D representations without manual tensor reshaping.
 
 ## Project Structure
 
-- `data/`: Local data storage.
-- `src/`: Source code.
-    - `data/`: Data loading and processing.
-        - `chronos_dataset.py`: Simplified Chronos dataset loader.
-        - `datamodule.py`: PyTorch Lightning DataModule.
-    - `models/`: Model definitions.
-        - `kan_contrastive.py`: KAN-based contrastive encoder.
-        - `lightning_kan.py`: PyTorch Lightning wrapper for KAN.
-    - `utils/`: Utility functions.
-        - `normalization.py`: Time series normalization.
-        - `wavelet_transform.py`: 2D Wavelet transformation.
+- `src/data/`: Dataset and DataModule implementations.
+- `src/models/`: KAN Encoder, Contrastive Loss, and Forecast Head.
+- `src/utils/`: Wavelet transformation and normalization utilities.
+- `config/`: Centralized YAML configuration.
 - `outputs/`: Training logs and model checkpoints.
-- `tests/`: Unit tests.
-    - `test_chronos_dataset.py`: Test for loading, normalization, and reverse normalization.
-- `main.py`: Entry point for training.
-- `requirements.txt`: Project dependencies.
+- `tests/`: Unit tests for data, wavelets, and models.
 
 ## Setup
 
@@ -29,23 +35,30 @@ This project implements a simplified Chronos dataset loader using PyTorch Lightn
     ```
 2.  **Environment Configuration**:
     The project uses a `.env` file to set `PYTHONPATH`. This ensures that the `src` module is discoverable.
-    If you are using VS Code, it will automatically pick up the `.env` file.
-    For manual terminal usage, you can set it:
-    - Windows (PowerShell): `$env:PYTHONPATH="."`
-    - Linux/macOS: `export PYTHONPATH=.`
+    ```text
+    PYTHONPATH=.
+    ```
+
+## Getting Started
+
+### 1. Pre-training (Contrastive Learning)
+
+Run the main script to train the encoder on multiple datasets using contrastive learning:
+```powershell
+python main.py
+```
+This will save logs and checkpoints to `outputs/lightning_logs/`.
+
+### 2. Forecasting
+
+Once the encoder is trained, update the `encoder_checkpoint` path in `config/config.yaml` and run the forecasting script:
+```powershell
+python forecast_main.py
+```
+This script trains the forecast head and evaluates performance using **MSE** and **MAE** on the original (inverse-transformed) scale.
 
 ## Configuration
 
-The project uses a YAML configuration file located at `config/config.yaml`. You can adjust data parameters, model architecture, and training settings there.
+All parameters (batch size, image size, learning rate, datasets) are managed in `config/config.yaml`.
 
-## How to Run Tests
-
-```bash
-python tests/test_chronos_dataset.py
-```
-
-## How to Train
-
-```bash
-python main.py
-```
+> **Note for Windows Users**: `num_workers` is set to `0` in the config to avoid pickling errors associated with the `pykan` library and multiprocessing.

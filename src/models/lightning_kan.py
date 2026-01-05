@@ -34,7 +34,7 @@ class KANContrastiveLightning(pl.LightningModule):
         
         loss = self.criterion(z1, z2)
         
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True, batch_size=x1.shape[0])
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -42,7 +42,7 @@ class KANContrastiveLightning(pl.LightningModule):
         z1 = self.encoder(x1)
         z2 = self.encoder(x2)
         loss = self.criterion(z1, z2)
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, batch_size=x1.shape[0])
         return loss
 
     def configure_optimizers(self):
