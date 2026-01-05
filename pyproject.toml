@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kan_time_series"
+version = "0.1.0"
+description = "Simplified Chronos dataset loader with PyTorch Lightning"
+dependencies = [
+    "torch",
+    "pytorch-lightning",
+    "datasets",
+    "pandas",
+    "numpy",
+    "pyyaml",
+    "matplotlib",
+    "PyWavelets",
+    "scipy"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

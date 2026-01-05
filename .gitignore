@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+
+# Project Specific
+data/
+outputs/
+model/
+*.png
+
+# IDEs
+.vscode/
+.idea/

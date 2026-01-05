@@ -1,0 +1,10 @@
+torch
+pytorch-lightning
+datasets
+pandas
+numpy
+pyyaml
+matplotlib
+PyWavelets
+scipy
+pykan

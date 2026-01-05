@@ -1,0 +1,5 @@
+image_size: 64
+hidden_dim: 128
+projection_dim: 64
+lr: 0.001
+temperature: 0.07
