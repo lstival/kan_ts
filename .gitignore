@@ -15,6 +15,9 @@ data/
 outputs/
 model/
 *.png
+*.sh
+*.txt
+*.yaml
 
 # IDEs
 .vscode/

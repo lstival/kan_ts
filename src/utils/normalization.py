@@ -4,60 +4,47 @@ from typing import Tuple, Union
 
 class TimeSeriesScaler:
     """
-    Mean scaler for time series data, following Chronos implementation.
-    Scales by the mean of absolute values.
+    Min-Max scaler for time series data.
+    Scales data to [0, 1] range.
     """
     def __init__(self, epsilon: float = 1e-6):
         self.epsilon = epsilon
-        self.scale = None
+        self.min_val = None
+        self.max_val = None
 
     def fit_transform(self, x: Union[torch.Tensor, np.ndarray]) -> Union[torch.Tensor, np.ndarray]:
         if isinstance(x, np.ndarray):
-            # Use numpy for calculation
-            abs_x = np.abs(x)
-            if np.all(np.isnan(abs_x)):
-                self.scale = 1.0
-            else:
-                self.scale = float(np.nanmean(abs_x))
+            self.min_val = np.nanmin(x)
+            self.max_val = np.nanmax(x)
         else:
-            # Use torch for calculation
-            abs_x = torch.abs(x)
-            if torch.all(torch.isnan(abs_x)):
-                self.scale = 1.0
-            else:
-                # Use nanmean if available, else fallback to nansum/count
-                if hasattr(torch, 'nanmean'):
-                    self.scale = float(torch.nanmean(abs_x))
+            # Handle torch tensors
+            if torch.any(torch.isnan(x)):
+                valid_x = x[~torch.isnan(x)]
+                if valid_x.numel() == 0:
+                    self.min_val = torch.tensor(0.0)
+                    self.max_val = torch.tensor(1.0)
                 else:
-                    mask = ~torch.isnan(abs_x)
-                    count = torch.sum(mask)
-                    if count == 0:
-                        self.scale = 1.0
-                    else:
-                        self.scale = float(torch.nansum(abs_x) / count)
+                    self.min_val = valid_x.min()
+                    self.max_val = valid_x.max()
+            else:
+                self.min_val = x.min()
+                self.max_val = x.max()
         
-        if self.scale < self.epsilon:
-            self.scale = 1.0
-            
-        scaled = x / self.scale
-        if isinstance(scaled, torch.Tensor):
-            return torch.clamp(scaled, -10.0, 10.0)
-        return np.clip(scaled, -10.0, 10.0)
+        denom = (self.max_val - self.min_val) + self.epsilon
+        scaled = (x - self.min_val) / denom
+        return scaled
 
     def transform(self, x: Union[torch.Tensor, np.ndarray]) -> Union[torch.Tensor, np.ndarray]:
-        if self.scale is None:
+        if self.min_val is None or self.max_val is None:
             raise ValueError("Scaler has not been fitted yet.")
         
-        scaled = x / self.scale
-        if isinstance(scaled, torch.Tensor):
-            return torch.clamp(scaled, -10.0, 10.0)
-        return np.clip(scaled, -10.0, 10.0)
+        denom = (self.max_val - self.min_val) + self.epsilon
+        scaled = (x - self.min_val) / denom
+        return scaled
 
     def inverse_transform(self, x: Union[torch.Tensor, np.ndarray]) -> Union[torch.Tensor, np.ndarray]:
-        if self.scale is None:
+        if self.min_val is None or self.max_val is None:
             raise ValueError("Scaler has not been fitted yet.")
-        
-        return x * self.scale
         
         denom = (self.max_val - self.min_val) + self.epsilon
         return x * denom + self.min_val

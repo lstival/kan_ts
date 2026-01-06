@@ -34,13 +34,13 @@ data:
   batch_size: 1024
   image_size: 64
   normalize: true
-  num_workers: 0 # Set to 0 on Windows to avoid pykan pickling errors
+  num_workers: 4 # Set to 0 on Windows to avoid pykan pickling errors
   context_length: 384
   prediction_length: 96
 
 model:
-  hidden_dim: 128
-  projection_dim: 64
+  hidden_dim: 50
+  projection_dim: 128
   lr: 0.001
   temperature: 0.07
   encoder_checkpoint: "outputs/lightning_logs/version_0/checkpoints/last.ckpt" # Update this after main.py run
@@ -51,3 +51,7 @@ training:
   gradient_clip_val: 1.0
   gradient_clip_algorithm: "norm"
   default_root_dir: "outputs"
+
+comet:
+  api_key: "SNv4ks5JjUxZ1X0FhARDGt4SY"
+  workspace: "kan-time-series"

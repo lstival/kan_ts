@@ -13,6 +13,7 @@ if str(root_dir) not in sys.path:
 from src.data.datamodule import ChronosDataModule
 from src.models.lightning_kan import KANContrastiveLightning
 from src.utils.wavelet_transform import WaveletTransform
+from pytorch_lightning.loggers import CometLogger
 
 def load_config(config_path: str):
     with open(config_path, 'r') as f:
@@ -20,7 +21,7 @@ def load_config(config_path: str):
 
 def main():
     # Suppress specific pykan warnings about std() on small batches
-    warnings.filterwarnings("ignore", message=".*std\(\): degrees of freedom is <= 0.*")
+    warnings.filterwarnings("ignore", message=r".*std\(\): degrees of freedom is <= 0.*")
     
     # Set float32 matmul precision for better performance on NVIDIA GPUs
     torch.set_float32_matmul_precision('medium')
@@ -32,6 +33,7 @@ def main():
     data_cfg = cfg['data']
     model_cfg = cfg['model']
     train_cfg = cfg['training']
+    comet_cfg = cfg.get('comet', {})
 
     # 1. Define Wavelet Transform for 2D Image representation
     transform = WaveletTransform(image_size=data_cfg['image_size'])
@@ -55,7 +57,19 @@ def main():
         temperature=model_cfg['temperature']
     )
 
-    # 4. Trainer with Mixed Precision (AMP) and Gradient Clipping
+    # 4. Logger: Comet.ml
+    comet_logger = None
+    if comet_cfg.get('api_key') and comet_cfg['api_key'] != "YOUR_COMET_API_KEY_HERE":
+        comet_logger = CometLogger(
+            api_key=comet_cfg['api_key'],
+            workspace=comet_cfg.get('workspace'),
+            project_name="kan-time-series",
+            save_dir=train_cfg.get('default_root_dir', 'outputs')
+        )
+    else:
+        print("Comet API key not found or placeholder used. Skipping Comet logging.")
+
+    # 5. Trainer with Mixed Precision (AMP) and Gradient Clipping
     trainer = pl.Trainer(
         max_epochs=train_cfg['max_epochs'],
         accelerator="auto",
@@ -63,6 +77,7 @@ def main():
         gradient_clip_val=train_cfg['gradient_clip_val'],
         gradient_clip_algorithm=train_cfg['gradient_clip_algorithm'],
         default_root_dir=train_cfg.get('default_root_dir', 'outputs'),
+        logger=comet_logger,
         log_every_n_steps=1 # Ensure logs are visible even for small datasets
     )
 
