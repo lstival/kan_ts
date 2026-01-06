@@ -52,6 +52,37 @@ class KANEncoder2D(nn.Module):
         
         return projected
 
+class KANEncoder(nn.Module):
+    """
+    Encoder that processes 1D time series directly using KAN.
+    """
+    def __init__(
+        self, 
+        input_dim: int = 384, 
+        hidden_dim: int = 128, 
+        projection_dim: int = 64
+    ):
+        super().__init__()
+        # Use KAN directly on the 1D input
+        self.kan = KAN(width=[input_dim, hidden_dim], grid=5, k=3)
+        self.projection = nn.Linear(hidden_dim, projection_dim)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            x: Input tensor of shape (batch, input_dim)
+        Returns:
+            Projected embeddings of shape (batch, projection_dim)
+        """
+        # Ensure input is 2D (batch, input_dim)
+        if x.dim() == 3 and x.shape[1] == 1:
+            x = x.squeeze(1)
+            
+        embeddings = self.kan(x)
+        projected = self.projection(embeddings)
+        
+        return projected
+
 class InfoNCELoss(nn.Module):
     """
     InfoNCE Loss for contrastive learning.

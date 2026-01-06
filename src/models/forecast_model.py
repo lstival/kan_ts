@@ -1,15 +1,14 @@
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
-from src.models.kan_contrastive import KANEncoder2D
 
 class ForecastHead(nn.Module):
     """
-    Forecast head that uses a pre-trained KANEncoder2D to predict future values.
+    Forecast head that uses a pre-trained KAN encoder to predict future values.
     """
     def __init__(
         self, 
-        encoder: KANEncoder2D, 
+        encoder: nn.Module, 
         projection_dim: int, 
         prediction_length: int
     ):
@@ -23,7 +22,7 @@ class ForecastHead(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            x: Input images (batch, 1, image_size, image_size)
+            x: Input time series or images (batch, ...)
         Returns:
             Predictions (batch, prediction_length)
         """
@@ -36,7 +35,7 @@ class ForecastHead(nn.Module):
 class ForecastLightning(pl.LightningModule):
     def __init__(
         self, 
-        encoder: KANEncoder2D,
+        encoder: nn.Module,
         projection_dim: int,
         prediction_length: int,
         lr: float = 1e-3,

@@ -3,7 +3,7 @@ data:
     # "m4_daily",
     # "m4_hourly",
     # "m4_monthly",
-    # "m4_yearly",
+    "m4_yearly",
     # "monash_australian_electricity",
     # "taxi_30min",
     # "monash_traffic",
@@ -34,7 +34,7 @@ data:
   batch_size: 1024
   image_size: 64
   normalize: true
-  num_workers: 4 # Set to 0 on Windows to avoid pykan pickling errors
+  num_workers: 0 # Set to 0 on Windows to avoid pykan pickling errors
   context_length: 384
   prediction_length: 96
 
@@ -44,6 +44,7 @@ model:
   lr: 0.001
   temperature: 0.07
   encoder_checkpoint: "outputs/lightning_logs/version_0/checkpoints/last.ckpt" # Update this after main.py run
+  forecast_checkpoint: "outputs/kan-time-series-forecast/ffc92a79fc69499fb1363d7b7f9ad399/checkpoints/epoch=9-step=10.ckpt"
 
 training:
   max_epochs: 10

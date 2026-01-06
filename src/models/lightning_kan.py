@@ -1,6 +1,7 @@
 import torch
 import pytorch_lightning as pl
-from src.models.kan_contrastive import KANEncoder2D, InfoNCELoss
+from src.models.kan_contrastive import KANEncoder, KANEncoder2D, InfoNCELoss
+from typing import Optional
 
 class KANContrastiveLightning(pl.LightningModule):
     """
@@ -8,7 +9,8 @@ class KANContrastiveLightning(pl.LightningModule):
     """
     def __init__(
         self, 
-        image_size: int = 64, 
+        input_dim: int = 384,
+        image_size: Optional[int] = None, 
         hidden_dim: int = 128, 
         projection_dim: int = 64,
         lr: float = 1e-3,
@@ -17,7 +19,11 @@ class KANContrastiveLightning(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         
-        self.encoder = KANEncoder2D(image_size, hidden_dim, projection_dim)
+        if image_size is not None:
+            self.encoder = KANEncoder2D(image_size, hidden_dim, projection_dim)
+        else:
+            self.encoder = KANEncoder(input_dim, hidden_dim, projection_dim)
+            
         self.criterion = InfoNCELoss(temperature)
         self.lr = lr
 
