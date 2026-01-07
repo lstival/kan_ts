@@ -74,7 +74,7 @@ class ChronosDataModule(pl.LightningDataModule):
             shuffle=True, 
             num_workers=self.num_workers,
             persistent_workers=self.num_workers > 0,
-            collate_fn=self._collate_fn if self.forecast else None
+            collate_fn=self._collate_fn
         )
 
     def val_dataloader(self):
@@ -84,12 +84,25 @@ class ChronosDataModule(pl.LightningDataModule):
             shuffle=False, 
             num_workers=self.num_workers,
             persistent_workers=self.num_workers > 0,
-            collate_fn=self._collate_fn if self.forecast else None
+            collate_fn=self._collate_fn
         )
 
     def _collate_fn(self, batch):
-        """Custom collate to handle scalers in forecast mode."""
-        contexts = torch.stack([item[0] for item in batch])
-        targets = torch.stack([item[1] for item in batch])
-        scalers = [item[2] for item in batch]
-        return contexts, targets, scalers
+        """Custom collate to handle scalers and different return formats."""
+        if self.contrastive:
+            # Contrastive returns (view1, view2)
+            view1 = torch.stack([item[0] for item in batch])
+            view2 = torch.stack([item[1] for item in batch])
+            return view1, view2
+        
+        if self.forecast:
+            # Forecast returns (context, target, scaler)
+            contexts = torch.stack([item[0] for item in batch])
+            targets = torch.stack([item[1] for item in batch])
+            scalers = [item[2] for item in batch]
+            return contexts, targets, scalers
+            
+        # Default/Loading: (target, scaler)
+        targets = torch.stack([item[0] for item in batch])
+        scalers = [item[1] for item in batch]
+        return targets, scalers

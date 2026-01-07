@@ -17,7 +17,8 @@ class ChronosDataset(Dataset):
         normalize: bool = True,
         context_length: int = 384,
         prediction_length: int = 96,
-        probabilities: Optional[List[float]] = None
+        probabilities: Optional[List[float]] = None,
+        transform: Optional[callable] = None
     ):
         self.datasets = []
         self.split = split
@@ -31,6 +32,7 @@ class ChronosDataset(Dataset):
                     self.datasets.append(ds)
             except Exception as e:
                 print(f"Error loading dataset {name}: {e}")
+                print(f"TIP: If you see 'Feature type List not found', try updating the datasets library: pip install --upgrade datasets")
         
         if not self.datasets:
             raise ValueError("No datasets loaded successfully.")
@@ -41,7 +43,7 @@ class ChronosDataset(Dataset):
         self.normalize = normalize
         self.contrastive = False 
         self.forecast = False
-        self.transform = None
+        self.transform = transform
         self.context_length = context_length
         self.prediction_length = prediction_length
         

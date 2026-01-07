@@ -31,19 +31,7 @@ def main():
     train_cfg = cfg['training']
     comet_cfg = cfg.get('comet', {})
 
-    # 1. DataModule in Forecast mode (Just time series, no images)
-    dm = ChronosDataModule(
-        dataset_names=data_cfg['dataset_names'], 
-        batch_size=data_cfg['batch_size'],
-        num_workers=data_cfg.get('num_workers', 0),
-        normalize=data_cfg['normalize'],
-        transform=None, # Raw time series
-        forecast=True, 
-        context_length=data_cfg['context_length'],
-        prediction_length=data_cfg['prediction_length']
-    )
-
-    # 2. Initialize Model (Using pre-trained or fresh encoder)
+    # 1. Initialize Model (Using pre-trained or fresh encoder)
     ckpt_path = model_cfg.get('encoder_checkpoint')
     if ckpt_path and Path(ckpt_path).exists():
         print(f"Loading pre-trained encoder from {ckpt_path}")
@@ -83,21 +71,39 @@ def main():
     else:
         print("Comet API key not found or placeholder used. Skipping Comet logging.")
 
-    # 5. Trainer
-    trainer = pl.Trainer(
-        max_epochs=train_cfg['max_epochs'],
-        accelerator="auto",
-        precision=train_cfg['precision'],
-        gradient_clip_val=train_cfg['gradient_clip_val'],
-        gradient_clip_algorithm=train_cfg['gradient_clip_algorithm'],
-        default_root_dir=Path(train_cfg.get('default_root_dir', 'outputs')) / "forecast",
-        logger=comet_logger,
-        log_every_n_steps=1
-    )
+    # 5. Train sequentially on each dataset
+    print(f"Starting sequential forecast training...")
+    
+    for ds_name in data_cfg['dataset_names']:
+        print(f"\n" + "="*50)
+        print(f"FORECAST TRAINING ON DATASET: {ds_name}")
+        print("="*50 + "\n")
 
-    # Train
-    print(f"Starting forecast training...")
-    trainer.fit(model, datamodule=dm)
+        # Create DataModule for this specific dataset
+        dm = ChronosDataModule(
+            dataset_names=[ds_name], 
+            batch_size=data_cfg['batch_size'],
+            num_workers=data_cfg.get('num_workers', 0),
+            normalize=data_cfg['normalize'],
+            transform=None,
+            forecast=True,
+            context_length=data_cfg['context_length'],
+            prediction_length=data_cfg['prediction_length']
+        )
+
+        # Create a new Trainer for each dataset to reset states
+        trainer = pl.Trainer(
+            max_epochs=train_cfg['max_epochs'],
+            accelerator="auto",
+            precision=train_cfg['precision'],
+            gradient_clip_val=1.0, # Stabilize gradients
+            gradient_clip_algorithm="norm",
+            default_root_dir=Path(train_cfg.get('default_root_dir', 'outputs')) / "forecast",
+            logger=comet_logger,
+            log_every_n_steps=1
+        )
+
+        trainer.fit(model, datamodule=dm)
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from kan import KAN
+from .efficient_kan import KAN
 
 class KANEncoder2D(nn.Module):
     """
@@ -30,7 +30,7 @@ class KANEncoder2D(nn.Module):
         
         # KAN for non-linear feature mapping
         # Input: 512, Output: hidden_dim
-        self.kan = KAN(width=[512, hidden_dim], grid=5, k=3)
+        self.kan = KAN(layers_hidden=[512, hidden_dim], grid_size=5, spline_order=3)
         
         # Projection head for contrastive learning
         self.projection = nn.Linear(hidden_dim, projection_dim)
@@ -64,7 +64,7 @@ class KANEncoder(nn.Module):
     ):
         super().__init__()
         # Use KAN directly on the 1D input
-        self.kan = KAN(width=[input_dim, hidden_dim], grid=5, k=3)
+        self.kan = KAN(layers_hidden=[input_dim, hidden_dim], grid_size=5, spline_order=3)
         self.projection = nn.Linear(hidden_dim, projection_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

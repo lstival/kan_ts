@@ -18,6 +18,10 @@ class ForecastHead(nn.Module):
         self.bn = nn.BatchNorm1d(projection_dim)
         # Simple linear head for forecasting
         self.head = nn.Linear(projection_dim, prediction_length)
+        
+        # Robust initialization
+        nn.init.xavier_uniform_(self.head.weight, gain=0.01)
+        nn.init.zeros_(self.head.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -58,13 +62,30 @@ class ForecastLightning(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y, _ = batch # x: images, y: targets, _: scalers
         y_hat = self.model(x)
+        
+        # Check for NaNs and Clamp extreme values
+        if torch.isnan(y_hat).any():
+            print(f"DEBUG: NaN detected in y_hat at batch {batch_idx}")
+            y_hat = torch.nan_to_num(y_hat, nan=0.0)
+            
+        y_hat = torch.clamp(y_hat, min=-11.0, max=11.0)
+            
         loss = self.criterion(y_hat, y)
+        
+        if torch.isnan(loss):
+            print(f"DEBUG: NaN detected in loss at batch {batch_idx}")
+            return None # Skip this step
+            
         self.log("train_loss", loss, prog_bar=True, batch_size=x.shape[0])
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y, scalers = batch
         y_hat = self.model(x)
+        
+        # Clamp to prevent inf in original scale evaluation
+        y_hat = torch.clamp(y_hat, min=-11.0, max=11.0)
+        
         loss = self.criterion(y_hat, y)
         
         # Evaluation on original scale

@@ -1,10 +1,9 @@
 torch
 pytorch-lightning
-datasets
+datasets>=4.4.2
 pandas
 numpy
 pyyaml
 matplotlib
 PyWavelets
 scipy
-pykan

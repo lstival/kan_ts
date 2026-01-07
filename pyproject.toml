@@ -9,7 +9,7 @@ description = "Simplified Chronos dataset loader with PyTorch Lightning"
 dependencies = [
     "torch",
     "pytorch-lightning",
-    "datasets",
+    "datasets>=4.4.2",
     "pandas",
     "numpy",
     "pyyaml",

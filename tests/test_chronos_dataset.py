@@ -63,5 +63,25 @@ def test_chronos_loading_and_normalization():
     
     print("Test passed: Loading, normalization, and reverse normalization are correct.")
 
+def test_specific_datasets_loading():
+    """
+    Test loading monash_kdd_cup_2018 and exchange_rate.
+    monash_kdd_cup_2018 had a schema issue ('List' feature type) 
+    that required updating the datasets library.
+    """
+    datasets_to_test = ["exchange_rate", "monash_kdd_cup_2018"]
+    print(f"\nTesting specific datasets: {datasets_to_test}...")
+    
+    for name in datasets_to_test:
+        print(f"Checking {name}...")
+        ds = ChronosDataset([name], split="train", normalize=True)
+        assert len(ds) > 0, f"Dataset {name} should not be empty"
+        
+        sample, scaler = ds[0]
+        assert isinstance(sample, torch.Tensor)
+        assert not torch.isnan(sample).any(), f"Sample from {name} contains NaNs"
+        print(f"Successfully loaded {name}, sample shape: {sample.shape}")
+
 if __name__ == "__main__":
     test_chronos_loading_and_normalization()
+    test_specific_datasets_loading()

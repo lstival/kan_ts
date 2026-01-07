@@ -1,4 +1,5 @@
 # %%
+from pytorch_lightning.loggers import CometLogger
 import pytorch_lightning as pl
 import torch
 import sys
@@ -13,7 +14,6 @@ if str(root_dir) not in sys.path:
 
 from src.data.datamodule import ChronosDataModule
 from src.models.lightning_kan import KANContrastiveLightning
-from pytorch_lightning.loggers import CometLogger
 
 def load_config(config_path: str):
     with open(config_path, 'r') as f:

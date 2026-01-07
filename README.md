@@ -57,6 +57,30 @@ python forecast_main.py
 ```
 This script trains the forecast head and evaluates performance using **MSE** and **MAE** on the original (inverse-transformed) scale.
 
+## Testing
+
+The project includes a comprehensive test suite covering data processing, model architectures, and utility functions. We use `pytest` for running tests.
+
+### Running Tests
+
+You can run the entire test suite using:
+```bash
+python -m pytest tests/
+```
+
+For more detailed output (verbose mode):
+```bash
+python -m pytest -v -s tests/
+```
+
+### Test Coverage
+
+The suite includes the following main parts:
+- **Normalization**: Verifies `TimeSeriesScaler` logic for `numpy` and `torch`, including `NaN` handling.
+- **Data Pipeline**: Tests `ChronosDataset` and `ChronosDataModule` across all modes (Forecast, Contrastive, and standard loading).
+- **Models**: Verifies the `Efficient KAN` architecture, `KANEncoder` (1D/2D), and the `ForecastHead` logic (including parameter freezing).
+- **Wavelets**: Ensures Continuous Wavelet Transformation correctly produces square 2D scalograms.
+
 ## Configuration
 
 All parameters (batch size, image size, learning rate, datasets) are managed in `config/config.yaml`.
