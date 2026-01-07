@@ -8,19 +8,19 @@ root_dir = Path(__file__).resolve().parents[1]
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
-from src.models.kan_contrastive import KANEncoder2D, InfoNCELoss
+from src.models.kan_contrastive import KANEncoder, InfoNCELoss
 
 def test_kan_model_shapes_and_nans():
-    print("Testing KAN Encoder 2D...")
+    print("Testing KAN Encoder 1D...")
     
-    image_size = 64
+    input_dim = 384
     batch_size = 8
     projection_dim = 64
     
-    model = KANEncoder2D(image_size=image_size, projection_dim=projection_dim)
+    model = KANEncoder(input_dim=input_dim, projection_dim=projection_dim)
     
-    # Create dummy input (batch, 1, image_size, image_size)
-    x = torch.randn(batch_size, 1, image_size, image_size)
+    # Create dummy input (batch, input_dim)
+    x = torch.randn(batch_size, input_dim)
     
     # Forward pass
     output = model(x)

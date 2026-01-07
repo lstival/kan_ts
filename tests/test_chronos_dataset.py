@@ -6,13 +6,14 @@ from src.utils.normalization import TimeSeriesScaler
 
 def test_chronos_loading_and_normalization():
     # Use a small dataset for testing
-    dataset_names = ["exchange_rate"]
+    dataset_names = ["exchange_rate", "m4_yearly"]
     print(f"Loading dataset: {dataset_names}...")
     ds = ChronosDataset(dataset_names, split="train", normalize=True)
     
     assert len(ds) > 0
     
-    # Get a sample
+    # Get a sample with fixed seed for reproducibility
+    torch.manual_seed(42)
     target, scaler = ds[0]
     print(f"Sample 0 shape: {target.shape}")
     print(f"Normalized sample (first 5 values): {target[:5].tolist()}")
@@ -30,6 +31,7 @@ def test_chronos_loading_and_normalization():
     
     # Original data from dataset (without normalization)
     ds_no_norm = ChronosDataset(dataset_names, split="train", normalize=False)
+    torch.manual_seed(42) # Set same seed to get the same window
     original_target = ds_no_norm[0]
     print(f"Original sample (first 5 values): {original_target[:5].tolist()}")
     
